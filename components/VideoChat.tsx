@@ -37,7 +37,15 @@ export default function VideoChat({ roomId }: VideoChatProps) {
           localVideoRef.current.srcObject = videoStream;
         }
 
-        const pc = new RTCPeerConnection();
+        // STUN sunucusu ekleyin
+        const pc = new RTCPeerConnection({
+          iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+            // TURN sunucusu eklemek isterseniz:
+            // { urls: "turn:your.turn.server:3478", username: "user", credential: "pass" }
+          ],
+        });
+
         audioStream
           .getTracks()
           .forEach((track) => pc.addTrack(track, audioStream));
