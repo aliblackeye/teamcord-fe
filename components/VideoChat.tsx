@@ -43,6 +43,9 @@ export default function VideoChat({ roomId }: VideoChatProps) {
             urls: "stun:stun.openrelay.metered.ca:80",
           },
           {
+            urls: "stun:stun.relay.metered.ca:80",
+          },
+          {
             urls: "turn:turn.openrelay.metered.ca:80",
             username: "3d33a57ef155efb838d32b7f",
             credential: "aZTrXGsg50igmOfN",
