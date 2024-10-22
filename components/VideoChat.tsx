@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import io from "socket.io-client";
 
-const socket = io("http://localhost:5000");
+// Yeni backend URL'sini kullanın
+const socket = io(process.env.NEXT_PUBLIC_BASE_URL);
 
 interface VideoChatProps {
   roomId: string;
@@ -14,25 +15,35 @@ export default function VideoChat({ roomId }: VideoChatProps) {
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const [peerConnection, setPeerConnection] =
     useState<RTCPeerConnection | null>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
+  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const [isMicrophoneOn, setIsMicrophoneOn] = useState(true);
+  const [isCameraOn, setIsCameraOn] = useState(true);
 
   useEffect(() => {
     async function getMedia() {
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 1280, height: 720 },
+        const audioStream = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
-        setStream(mediaStream);
+        setAudioStream(audioStream);
+
+        const videoStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 1280, height: 720 },
+        });
+        setVideoStream(videoStream);
+
         if (localVideoRef.current) {
-          localVideoRef.current.srcObject = mediaStream;
+          localVideoRef.current.srcObject = videoStream;
         }
 
         const pc = new RTCPeerConnection();
-        mediaStream
+        audioStream
           .getTracks()
-          .forEach((track) => pc.addTrack(track, mediaStream));
+          .forEach((track) => pc.addTrack(track, audioStream));
+        videoStream
+          .getTracks()
+          .forEach((track) => pc.addTrack(track, videoStream));
         setPeerConnection(pc);
 
         pc.onicecandidate = (event) => {
@@ -84,11 +95,20 @@ export default function VideoChat({ roomId }: VideoChatProps) {
   }, [roomId]);
 
   const toggleMicrophone = () => {
-    if (stream) {
-      stream.getAudioTracks().forEach((track) => {
+    if (audioStream) {
+      audioStream.getAudioTracks().forEach((track) => {
         track.enabled = !track.enabled;
       });
       setIsMicrophoneOn(!isMicrophoneOn);
+    }
+  };
+
+  const toggleCamera = () => {
+    if (videoStream) {
+      videoStream.getVideoTracks().forEach((track) => {
+        track.enabled = !track.enabled;
+      });
+      setIsCameraOn(!isCameraOn);
     }
   };
 
@@ -98,6 +118,9 @@ export default function VideoChat({ roomId }: VideoChatProps) {
       <video ref={remoteVideoRef} autoPlay playsInline />
       <button onClick={toggleMicrophone}>
         {isMicrophoneOn ? "Mikrofonu Kapat" : "Mikrofonu Aç"}
+      </button>
+      <button onClick={toggleCamera}>
+        {isCameraOn ? "Kamerayı Kapat" : "Kamerayı Aç"}
       </button>
     </div>
   );
