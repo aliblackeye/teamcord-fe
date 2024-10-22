@@ -7,7 +7,7 @@ type Params = {
   roomId: string;
 };
 
-export default function Room({ params }: { params: Params }) {
+export default function Room({ params }: any) {
   const { roomId } = React.use(params as any) as Params;
 
   return (
