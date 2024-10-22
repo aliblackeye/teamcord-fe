@@ -38,13 +38,33 @@ export default function VideoChat({ roomId }: VideoChatProps) {
         }
 
         // STUN sunucusu ekleyin
-        const pc = new RTCPeerConnection({
-          iceServers: [
-            { urls: "stun:stun.l.google.com:19302" },
-            // TURN sunucusu eklemek isterseniz:
-            // { urls: "turn:your.turn.server:3478", username: "user", credential: "pass" }
-          ],
-        });
+        const iceServers = [
+          {
+            urls: "stun:stun.openrelay.metered.ca:80",
+          },
+          {
+            urls: "turn:turn.openrelay.metered.ca:80",
+            username: "3d33a57ef155efb838d32b7f",
+            credential: "aZTrXGsg50igmOfN",
+          },
+          {
+            urls: "turn:turn.openrelay.metered.ca:443",
+            username: "3d33a57ef155efb838d32b7f",
+            credential: "aZTrXGsg50igmOfN",
+          },
+          {
+            urls: "turn:turn.openrelay.metered.ca:443?transport=tcp",
+            username: "3d33a57ef155efb838d32b7f",
+            credential: "aZTrXGsg50igmOfN",
+          },
+          {
+            urls: "turn:turn.openrelay.metered.ca:80?transport=tcp",
+            username: "3d33a57ef155efb838d32b7f",
+            credential: "aZTrXGsg50igmOfN",
+          },
+        ];
+
+        const pc = new RTCPeerConnection({ iceServers });
 
         audioStream
           .getTracks()
