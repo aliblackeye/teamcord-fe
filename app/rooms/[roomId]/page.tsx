@@ -1,7 +1,14 @@
-import VideoChat from "@/components/VideoChat";
+"use client";
 
-export default async function Room({ params }: { params: { roomId: string } }) {
-  const { roomId } = await params;
+import VideoChat from "@/components/VideoChat";
+import React from "react";
+
+type Params = {
+  roomId: string;
+};
+
+export default function Room({ params }: { params: Params }) {
+  const { roomId } = React.use(params as any) as Params;
 
   return (
     <div>
