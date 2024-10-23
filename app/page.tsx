@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [roomId, setRoomId] = useState("");
+  const [username, setUsername] = useState("");
   const router = useRouter();
 
   const handleJoinRoom = () => {
-    if (roomId.trim()) {
-      router.push(`/rooms/${roomId}`);
+    if (roomId.trim() && username.trim()) {
+      router.push(`/rooms/${roomId}?username=${encodeURIComponent(username)}`);
     }
   };
 
@@ -22,6 +23,13 @@ export default function Home() {
           placeholder="Oda ID'si"
           value={roomId}
           onChange={(e) => setRoomId(e.target.value)}
+          className="border border-gray-300 p-2 rounded w-full mb-4"
+        />
+        <input
+          type="text"
+          placeholder="Kullanıcı İsmi"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           className="border border-gray-300 p-2 rounded w-full mb-4"
         />
         <button
