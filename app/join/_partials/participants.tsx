@@ -81,7 +81,7 @@ const RoomActions = () => {
   const isMicOn = false;
   const isScreenShareOn = false;
   const isCameraOn = false;
-  const isChatOn = false;
+  const isChatOn = true;
   const delayDuration = 1000;
   const searchParams = useSearchParams();
   const username = searchParams.get("username") || "Anonim";
@@ -89,13 +89,13 @@ const RoomActions = () => {
   return (
     <div
       className={cn(
-        "bg-muted min-h-[121px] h-[121px]",
-        !isChatOn && "min-h-[73px] h-[73px]"
+        "bg-muted min-h-[108px] h-[108px]",
+        !isChatOn && "min-h-[60px] h-[60px]"
       )}
     >
       <TooltipProvider delayDuration={delayDuration}>
         {isChatOn && (
-          <div className="px-4 py-2">
+          <div className="px-4 py-2 h-12">
             <div className="flex gap-2 justify-between">
               <RoomActionButton tooltip="Kamerayı Aç">
                 <VideoOff />
@@ -118,9 +118,9 @@ const RoomActions = () => {
             </div>
           </div>
         )}
-        <div className="flex justify-between items-center p-4 border-t border-neutral-700 ">
+        <div className="flex justify-between h-[60px]  items-center px-4 border-t border-neutral-700 ">
           <div className="flex gap-2">
-            <Avatar>
+            <Avatar className="w-8 h-8">
               <AvatarImage
                 src={`https://cdn.dribbble.com/userupload/13643081/file/original-6bff19f67096525f84984e9465892dca.png?resize=400x300&vertical=center`}
               />
