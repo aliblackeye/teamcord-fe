@@ -11,6 +11,7 @@ import { useRoom } from "@/lib/context/room-context";
 import { cn } from "@/lib/utils/cn";
 import { MicOff, Phone, PhoneOff, ScreenShare, VideoOff } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { useCallback, useState } from "react";
 
 export const Participants = () => {
 	const { onlineUsers } = useRoom();
@@ -29,8 +30,8 @@ export const Participants = () => {
 								<Avatar
 									key={index}
 									className={cn(
-										"w-10 h-10  overflow-hidden ",
-										username === user.username && "ring-4 ring-green-500"
+										"w-6 h-6  overflow-hidden ",
+										username === user.username && "ring-2 ring-green-500"
 									)}>
 									<AvatarImage
 										src={`https://cdn.dribbble.com/userupload/13643081/file/original-6bff19f67096525f84984e9465892dca.png?resize=400x300&vertical=center`}
@@ -61,10 +62,12 @@ const RoomActionButton = ({
 	children,
 	tooltip,
 	variant,
+	onClick,
 }: {
 	children: React.ReactNode;
 	tooltip: string;
 	variant?: "success" | "destructive";
+	onClick?: () => void;
 }) => {
 	return (
 		<Tooltip>
@@ -89,6 +92,50 @@ const RoomActions = () => {
 	const delayDuration = 1000;
 	const searchParams = useSearchParams();
 	const username = searchParams.get("username") || "Anonim";
+
+	const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+
+	const getMediaStream = useCallback(
+		async (faceMode?: string) => {
+			if (localStream) {
+				return localStream;
+			}
+
+			try {
+				const devices = await navigator.mediaDevices.enumerateDevices();
+				const videoDevices = devices.filter(
+					(device) => device.kind === "videoinput"
+				);
+
+				const stream = await navigator.mediaDevices.getUserMedia({
+					video: {
+						width: { min: 640, ideal: 1280, max: 1920 },
+
+						height: { min: 360, ideal: 720, max: 1080 },
+						frameRate: { min: 16, ideal: 30, max: 30 },
+						facingMode: videoDevices.length > 0 ? faceMode : undefined,
+					},
+					audio: true,
+				});
+
+				setLocalStream(stream);
+				return stream;
+			} catch (error) {
+				console.error("Failed to get media stream", error);
+				setLocalStream(null);
+				return null;
+			}
+		},
+		[localStream]
+	);
+
+	const handleCall = useCallback(async () => {
+		const stream = await getMediaStream();
+		if (!stream) {
+			console.log("No stream");
+			return;
+		}
+	}, []);
 
 	return (
 		<div
@@ -137,7 +184,8 @@ const RoomActions = () => {
 					{!isChatOn && (
 						<RoomActionButton
 							tooltip="Sohbete Katıl"
-							variant="success">
+							variant="success"
+							onClick={handleCall}>
 							<Phone />
 						</RoomActionButton>
 					)}

@@ -1,57 +1,14 @@
 "use client";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Participants } from "./participants";
 import { ServerInfo } from "./server-info";
 import { ServerList } from "./server-list";
 
 export const RoomSidebar = () => {
 	const [dark, setDark] = useState<boolean>(false);
-	const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 	const { theme, setTheme } = useTheme();
-
-	const getMediaStream = useCallback(
-		async (faceMode?: string) => {
-			if (localStream) {
-				return localStream;
-			}
-
-			try {
-				const devices = await navigator.mediaDevices.enumerateDevices();
-				const videoDevices = devices.filter(
-					(device) => device.kind === "videoinput"
-				);
-
-				const stream = await navigator.mediaDevices.getUserMedia({
-					video: {
-						width: { min: 640, ideal: 1280, max: 1920 },
-
-						height: { min: 360, ideal: 720, max: 1080 },
-						frameRate: { min: 16, ideal: 30, max: 30 },
-						facingMode: videoDevices.length > 0 ? faceMode : undefined,
-					},
-					audio: true,
-				});
-
-				setLocalStream(stream);
-				return stream;
-			} catch (error) {
-				console.error("Failed to get media stream", error);
-				setLocalStream(null);
-				return null;
-			}
-		},
-		[localStream]
-	);
-
-	const handleCall = useCallback(async () => {
-		const stream = await getMediaStream();
-		if (!stream) {
-			console.log("No stream");
-			return;
-		}
-	}, []);
 
 	useEffect(() => {
 		if (theme === "dark") {
