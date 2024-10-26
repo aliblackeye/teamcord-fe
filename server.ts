@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import next from "next";
 import { Server } from "socket.io";
 import { SocketUser } from "@/lib/types";
+import { onCall } from "./lib/socket-events/on-call";
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
 const port = 3000;
@@ -9,38 +10,41 @@ const port = 3000;
 const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
 
+export let io: Server;
 app.prepare().then(() => {
-  const httpServer = createServer(handler);
-  const io = new Server(httpServer);
+	const httpServer = createServer(handler);
+	io = new Server(httpServer);
 
-  let onlineUsers: SocketUser[] = [];
+	let onlineUsers: SocketUser[] = [];
 
-  io.on("connection", (socket) => {
-    console.log("client connected...", socket.id);
-    // Add user to online users list
-    socket.on("add-user", (username) => {
-      if (username && !onlineUsers.some((user) => user.username === username)) {
-        onlineUsers.push({ username, socketId: socket.id });
-      }
+	io.on("connection", (socket) => {
+		console.log("client connected...", socket.id);
+		// Add user to online users list
+		socket.on("add-user", (username) => {
+			if (username && !onlineUsers.some((user) => user.username === username)) {
+				onlineUsers.push({ username, socketId: socket.id });
+			}
 
-      // Send active users to all clients
-      io.emit("get-users", onlineUsers);
-    });
+			// Send active users to all clients
+			io.emit("get-users", onlineUsers);
+		});
 
-    socket.on("disconnect", () => {
-      onlineUsers = onlineUsers.filter((user) => user.socketId !== socket.id);
+		socket.on("call", onCall);
 
-      // Send active users to all clients
-      io.emit("get-users", onlineUsers);
-    });
-  });
+		socket.on("disconnect", () => {
+			onlineUsers = onlineUsers.filter((user) => user.socketId !== socket.id);
 
-  httpServer
-    .once("error", (err) => {
-      console.error(err);
-      process.exit(1);
-    })
-    .listen(port, () => {
-      console.log(`Server is running on http://${hostname}:${port}`);
-    });
+			// Send active users to all clients
+			io.emit("get-users", onlineUsers);
+		});
+	});
+
+	httpServer
+		.once("error", (err) => {
+			console.error(err);
+			process.exit(1);
+		})
+		.listen(port, () => {
+			console.log(`Server is running on http://${hostname}:${port}`);
+		});
 });
