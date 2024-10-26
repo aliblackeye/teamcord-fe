@@ -6,7 +6,7 @@ import {
   ResizableHandle,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import { RoomSidebar } from "./room-sidebar";
 import { RoomChatPanel } from "./room-chat-panel";
 import { RoomContentPanel } from "./room-content-panel";
@@ -57,20 +57,18 @@ export const Room = () => {
   ]);
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <div className="h-screen">
-        <div className="flex h-full">
-          <RoomSidebar />
-          <ResizablePanelGroup
-            direction="horizontal"
-            className="h-full items-stretch"
-          >
-            <RoomContentPanel />
-            <ResizableHandle withHandle />
-            <RoomChatPanel messages={messages} />
-          </ResizablePanelGroup>
-        </div>
+    <div className="h-screen">
+      <div className="flex h-full">
+        <RoomSidebar />
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="h-full items-stretch"
+        >
+          <RoomContentPanel />
+          <ResizableHandle withHandle />
+          <RoomChatPanel messages={messages} />
+        </ResizablePanelGroup>
       </div>
-    </Suspense>
+    </div>
   );
 };
