@@ -6,7 +6,7 @@ import {
 	ResizableHandle,
 	ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { RoomSidebar } from "./room-sidebar";
 import { RoomChatPanel } from "./room-chat-panel";
 import { RoomContentPanel } from "./room-content-panel";
@@ -42,6 +42,9 @@ const iceServers = [
 ];
 
 export const Room = () => {
+	// Refs
+
+	// States
 	const [isCollapsed, setIsCollapsed] = useState(false);
 	const { onlineUsers } = useRoom();
 	const [ongoingCall, setOngoingCall] = useState(false);
@@ -54,6 +57,7 @@ export const Room = () => {
 			avatar: "",
 		},
 	]);
+	const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
 	return (
 		<div className="h-screen">
@@ -62,7 +66,7 @@ export const Room = () => {
 				<ResizablePanelGroup
 					direction="horizontal"
 					className="h-full items-stretch">
-					<RoomContentPanel />
+					{localStream && <RoomContentPanel stream={localStream} />}
 					<ResizableHandle withHandle />
 					<RoomChatPanel messages={messages} />
 				</ResizablePanelGroup>
