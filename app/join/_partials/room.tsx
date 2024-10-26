@@ -1,6 +1,5 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { useRoom } from "@/lib/context/room-context";
 
 import {
@@ -54,9 +53,6 @@ type Message = {
 };
 
 export const Room = () => {
-  const searchParams = useSearchParams();
-  const username = searchParams.get("username") || "Anonim";
-  const roomId = searchParams.get("roomId") || "Anonim";
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { onlineUsers } = useRoom();
   const [ongoingCall, setOngoingCall] = useState(false);
@@ -79,16 +75,16 @@ export const Room = () => {
           direction="horizontal"
           className="h-full items-stretch"
         >
-          <ContentPanel />
+          <Room.ContentPanel />
           <ResizableHandle withHandle />
-          <ChatPanel messages={messages} />
+          <Room.ChatPanel messages={messages} />
         </ResizablePanelGroup>
       </div>
     </div>
   );
 };
 
-const ContentPanel = () => {
+Room.ContentPanel = () => {
   return (
     <ResizablePanel defaultSize={100} minSize={0}>
       <div className="p-4 h-full flex gap-4 flex-wrap justify-center items-center ">
@@ -105,7 +101,7 @@ const ContentPanel = () => {
   );
 };
 
-const ChatPanel = ({ messages }: { messages: Message[] }) => {
+Room.ChatPanel = ({ messages }: { messages: Message[] }) => {
   return (
     <ResizablePanel defaultSize={50} minSize={30} maxSize={100}>
       <ScrollArea className="h-[calc(100%-96px)]">

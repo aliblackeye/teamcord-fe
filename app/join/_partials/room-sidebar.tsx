@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { Participants } from "./participants";
 import { useSearchParams } from "next/navigation";
@@ -13,17 +15,17 @@ export const RoomSidebar = () => {
           <hr className="w-8 h-1" />
         </div>
 
-        <ServerList />
+        <RoomSidebar.ServerList />
       </div>
       <div className="flex flex-col">
-        <ServerInfo />
+        <RoomSidebar.ServerInfo />
         <Participants />
       </div>
     </aside>
   );
 };
 
-const ServerList = () => {
+RoomSidebar.ServerList = () => {
   return (
     <div className="w-[60px] h-full bg-neutral-900 overflow-y-auto items-center flex flex-col gap-4 py-4 border-r ">
       <div className="w-10 h-10 bg-white rounded-[50%] hover:rounded-xl transition-all ease-in-out cursor-pointer"></div>
@@ -31,7 +33,7 @@ const ServerList = () => {
   );
 };
 
-const ServerInfo = () => {
+RoomSidebar.ServerInfo = () => {
   const searchParams = useSearchParams();
   const roomId = searchParams.get("roomId") || "Anonim";
   return (
