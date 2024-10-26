@@ -11,3 +11,10 @@ export type Participant = {
   username: string;
   socketId: string;
 };
+export type Message = {
+  id: string;
+  content: string;
+  createdAt: Date;
+  sender: string;
+  avatar: string;
+};
