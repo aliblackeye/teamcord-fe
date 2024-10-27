@@ -26,4 +26,8 @@ export type VoiceChannel = {
   subscribers: Participant[];
 };
 
+export type Subscriber = {
+  socketId: string;
+};
+
 export type Channel = { channelId: string; subscribers: Subscriber[] };
