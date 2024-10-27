@@ -1,3 +1,4 @@
+"use client";
 import { useContext, useEffect, useState, createContext } from "react";
 import { io, Socket } from "socket.io-client";
 
@@ -32,6 +33,7 @@ export const SocketContextProvider = ({
     const onConnect = () => {
       setIsSocketConnected(true);
     };
+
     const onDisconnect = () => {
       setIsSocketConnected(false);
     };

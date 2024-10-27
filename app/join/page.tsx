@@ -1,13 +1,18 @@
+"use client";
+
 import { Suspense } from "react";
 import { Room } from "./_partials/room";
-import { RoomProvider } from "./_partials/room-provider";
+import { ChannelProvider } from "./_partials/channel-provider";
+import { ChatRoomContextProvider } from "@/lib/context/chat-room-context";
 
-export default async function JoinPage() {
-	return (
-		<Suspense fallback={<div>Joining room...</div>}>
-			<RoomProvider>
-				<Room />
-			</RoomProvider>
-		</Suspense>
-	);
+export default function JoinPage() {
+  return (
+    <Suspense fallback={<div>Joining room...</div>}>
+      <ChannelProvider>
+        <ChatRoomContextProvider>
+          <Room />
+        </ChatRoomContextProvider>
+      </ChannelProvider>
+    </Suspense>
+  );
 }

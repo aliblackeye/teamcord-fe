@@ -1,21 +1,29 @@
 export type SocketUser = {
-	username: string;
-	socketId: string;
+  username: string;
+  socketId: string;
 };
 
 export type OngoingCall = {
-	participants: Participant[];
+  participants: Participant[];
 };
 
 export type Participant = {
-	username: string;
-	socketId: string;
-	stream: MediaStream;
+  username: string;
+  socketId: string;
+  stream: MediaStream | null;
 };
+
 export type Message = {
-	id: string;
-	content: string;
-	createdAt: Date;
-	sender: string;
-	avatar: string;
+  id: string;
+  content: string;
+  createdAt: Date;
+  sender: string;
+  avatar: string;
 };
+
+export type VoiceChannel = {
+  channelId: string;
+  subscribers: Participant[];
+};
+
+export type Channel = { channelId: string; subscribers: Subscriber[] };

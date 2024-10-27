@@ -7,39 +7,40 @@ import { ServerInfo } from "./server-info";
 import { ServerList } from "./server-list";
 
 export const RoomSidebar = () => {
-	const [dark, setDark] = useState<boolean>(false);
-	const { theme, setTheme } = useTheme();
+  const [dark, setDark] = useState<boolean>(false);
+  const { theme, setTheme } = useTheme();
 
-	useEffect(() => {
-		if (theme === "dark") {
-			setDark(true);
-		} else {
-			setDark(false);
-		}
-	}, [theme]);
+  useEffect(() => {
+    if (theme === "dark") {
+      setDark(true);
+    } else {
+      setDark(false);
+    }
+  }, [theme]);
 
-	return (
-		<aside className="flex border-r-2 dark:bg-neutral-900 bg-neutral-100 ">
-			<div className="flex flex-col !w-[60px]">
-				<div className="min-h-[63px] gap-2 flex-col border-r h-16 flex items-center justify-end">
-					<div className="min-w-10 min-h-10 text-2xl font-bold text-center flex justify-center items-center">
-						tc
-					</div>
-					<hr className="w-8 h-1" />
-				</div>
+  return (
+    <aside className="flex border-r-2 dark:bg-neutral-900 bg-neutral-100 ">
+      <div className="flex flex-col !w-[60px]">
+        <div className="min-h-[63px] gap-2 flex-col border-r h-16 flex items-center justify-end">
+          <div className="min-w-10 min-h-10 text-2xl font-bold text-center flex justify-center items-center">
+            tc
+          </div>
+          <hr className="w-8 h-1" />
+        </div>
 
-				<ServerList />
+        <ServerList />
 
-				<div
-					onClick={() => setTheme(dark ? "light" : "dark")}
-					className="cursor-pointer min-h-[60px] text-primary flex items-center justify-center border-r ">
-					{dark ? <Sun /> : <Moon />}
-				</div>
-			</div>
-			<div className="flex flex-col dark:bg-neutral-900 bg-neutral-100">
-				<ServerInfo />
-				<Participants />
-			</div>
-		</aside>
-	);
+        <div
+          onClick={() => setTheme(dark ? "light" : "dark")}
+          className="cursor-pointer min-h-[60px] text-primary flex items-center justify-center border-r "
+        >
+          {dark ? <Sun /> : <Moon />}
+        </div>
+      </div>
+      <div className="flex flex-col dark:bg-neutral-900 bg-neutral-100">
+        <ServerInfo />
+        <Participants />
+      </div>
+    </aside>
+  );
 };
