@@ -18,7 +18,9 @@ export const SocketContextProvider = ({
   const [isSocketConnected, setIsSocketConnected] = useState(false);
 
   useEffect(() => {
-    const newSocket = io("http://localhost:3000");
+    const newSocket = io(
+      process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+    );
 
     setSocket(newSocket);
 
