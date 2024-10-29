@@ -16,6 +16,8 @@ interface IChatRoomContext {
   joinVoiceChannel: (participant: Participant) => void;
   leaveVoiceChannel: (participant: Participant) => void;
   getVoiceChannel: () => void;
+  getMediaStream: (faceMode?: string) => Promise<MediaStream | null>;
+  localStream: MediaStream | null;
   isOnVoiceChannel: boolean;
   voiceChannel: VoiceChannel | null;
 }
@@ -36,6 +38,7 @@ export const ChatRoomContextProvider = ({
   const { subscribers, channelId } = useChannel();
 
   // States
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [voiceChannel, setVoiceChannel] = useState<VoiceChannel | null>(null);
   const [isOnVoiceChannel, setIsOnVoiceChannel] = useState(false);
 
@@ -61,6 +64,39 @@ export const ChatRoomContextProvider = ({
     socket?.emit("get-voice-channel", channelId);
   }, [socket, channelId]);
 
+  const getMediaStream = useCallback(
+    async (faceMode?: string) => {
+      if (localStream) {
+        return localStream;
+      }
+
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(
+          (device) => device.kind === "videoinput"
+        );
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: {
+            width: { min: 640, ideal: 1280, max: 1920 },
+            height: { min: 360, ideal: 720, max: 1080 },
+            frameRate: { min: 16, ideal: 30, max: 30 },
+            facingMode: videoDevices.length > 0 ? faceMode : undefined,
+          },
+        });
+
+        setLocalStream(stream);
+        return stream;
+      } catch (error) {
+        console.error("Failed to get media stream", error);
+        setLocalStream(null);
+        return null;
+      }
+    },
+    [localStream]
+  );
+
   // Set online users
   useEffect(() => {
     if (!isSocketConnected || !socket) return;
@@ -69,12 +105,9 @@ export const ChatRoomContextProvider = ({
     getVoiceChannel();
 
     socket.on("get-voice-channel", (updatedVoiceChannel) => {
-      console.log("voiceChannel received on client", updatedVoiceChannel);
-
       const previousVoiceChannel = previousVoiceChannelRef.current;
 
       if (previousVoiceChannel) {
-        console.log("ses oynatılıyor");
         // VoiceChannel subscribers azalırsa
         if (
           previousVoiceChannel.subscribers.length >
@@ -106,6 +139,8 @@ export const ChatRoomContextProvider = ({
         leaveVoiceChannel,
         isOnVoiceChannel,
         getVoiceChannel,
+        getMediaStream,
+        localStream,
       }}
     >
       {children}

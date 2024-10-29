@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Participants } from "./participants";
 import { ServerInfo } from "./server-info";
 import { ServerList } from "./server-list";
+import { Logo } from "./logo";
 
 export const RoomSidebar = () => {
   const [dark, setDark] = useState<boolean>(false);
@@ -21,12 +22,7 @@ export const RoomSidebar = () => {
   return (
     <aside className="flex border-r-2 dark:bg-neutral-900 bg-neutral-100 ">
       <div className="flex flex-col !w-[60px]">
-        <div className="min-h-[63px] gap-2 flex-col border-r h-16 flex items-center justify-end">
-          <div className="min-w-10 min-h-10 text-2xl font-bold text-center flex justify-center items-center">
-            tc
-          </div>
-          <hr className="w-8 h-1" />
-        </div>
+        <Logo />
 
         <ServerList />
 

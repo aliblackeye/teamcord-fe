@@ -5,7 +5,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { useState } from "react";
-import { RoomSidebar } from "./room-sidebar";
+import { RoomSidebar } from "./room-sidebar/room-sidebar";
 import { RoomChatPanel } from "./room-chat-panel";
 import { RoomContentPanel } from "./room-content-panel";
 import { Message } from "@/lib/types";
@@ -53,7 +53,6 @@ export const Room = () => {
       avatar: "",
     },
   ]);
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
   return (
     <div className="h-screen">
@@ -63,7 +62,7 @@ export const Room = () => {
           direction="horizontal"
           className="h-full items-stretch"
         >
-          <RoomContentPanel localStream={localStream} />
+          <RoomContentPanel />
           <ResizableHandle withHandle />
           <RoomChatPanel messages={messages} />
         </ResizablePanelGroup>

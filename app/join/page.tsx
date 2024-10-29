@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { Room } from "./_partials/room";
+import { Room } from "./_partials/room/room";
 import { ChannelProvider } from "./_partials/channel-provider";
 import { ChatRoomContextProvider } from "@/lib/context/chat-room-context";
 
