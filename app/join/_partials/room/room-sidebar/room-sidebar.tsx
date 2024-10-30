@@ -2,7 +2,7 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { Participants } from "./participants";
+import { ParticipantList } from "./participant-list";
 import { ServerInfo } from "./server-info";
 import { ServerList } from "./server-list";
 import { Logo } from "./logo";
@@ -35,7 +35,7 @@ export const RoomSidebar = () => {
       </div>
       <div className="flex flex-col dark:bg-neutral-900 bg-neutral-100">
         <ServerInfo />
-        <Participants />
+        <ParticipantList />
       </div>
     </aside>
   );

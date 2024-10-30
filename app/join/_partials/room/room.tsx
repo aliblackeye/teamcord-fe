@@ -9,36 +9,6 @@ import { RoomSidebar } from "./room-sidebar/room-sidebar";
 import { RoomChatPanel } from "./room-chat-panel";
 import { RoomContentPanel } from "./room-content-panel";
 import { Message } from "@/lib/types";
-import { useChannel } from "@/lib/context/channel-context";
-
-const iceServers = [
-  {
-    urls: ["stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"],
-  },
-  /* {
-    urls: "stun:stun.relay.metered.ca:80",
-  },
-  {
-    urls: "turn:a.relay.metered.ca:80",
-    username: "3d33a57ef155efb838d32b7f",
-    credential: "aZTrXGsg50igmOfN",
-  },
-  {
-    urls: "turn:a.relay.metered.ca:443",
-    username: "3d33a57ef155efb838d32b7f",
-    credential: "aZTrXGsg50igmOfN",
-  },
-  {
-    urls: "turn:a.relay.metered.ca:443?transport=tcp",
-    username: "3d33a57ef155efb838d32b7f",
-    credential: "aZTrXGsg50igmOfN",
-  },
-  {
-    urls: "turn:a.relay.metered.ca:80?transport=tcp",
-    username: "3d33a57ef155efb838d32b7f",
-    credential: "aZTrXGsg50igmOfN",
-  }, */
-];
 
 export const Room = () => {
   // Refs

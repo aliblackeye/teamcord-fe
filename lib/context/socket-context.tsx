@@ -30,7 +30,7 @@ export const SocketContextProvider = ({
   }, []);
 
   useEffect(() => {
-    if (socket === null) return;
+    if (!socket) return;
 
     const onConnect = () => {
       setIsSocketConnected(true);

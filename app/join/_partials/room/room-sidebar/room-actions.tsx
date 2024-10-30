@@ -8,15 +8,15 @@ import {
   Phone,
   PhoneOff,
   ScreenShare,
-  ScreenShareOff,
   Video,
   VideoOff,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { RoomActionButton } from "./room-action-button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ShowPing } from "@/components/show-ping";
 
 export const RoomActions = () => {
   const delayDuration = 1000;
@@ -26,33 +26,14 @@ export const RoomActions = () => {
     joinVoiceChannel,
     leaveVoiceChannel,
     isOnVoiceChannel,
-    getMediaStream,
+
     localStream,
   } = useChatRoom();
-  const { socket, isSocketConnected } = useSocket();
+  const { socket } = useSocket();
 
   const [isMicOn, setIsMicOn] = useState(false);
   const [isScreenShareOn, setIsScreenShareOn] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(false);
-
-  const handleJoinVoiceChannel = useCallback(async () => {
-    if (!socket || !isSocketConnected) return;
-    const stream = await getMediaStream();
-    if (!stream) {
-      console.log("No stream in handleJoinVoiceChannel");
-      return;
-    }
-
-    joinVoiceChannel({ stream, username, socketId: socket?.id as string });
-  }, [isSocketConnected, socket, username]);
-
-  const handleLeaveVoiceChannel = useCallback(() => {
-    leaveVoiceChannel({
-      stream: null,
-      username,
-      socketId: socket?.id as string,
-    });
-  }, [leaveVoiceChannel, socket?.id, username]);
 
   const toggleCamera = () => {
     if (localStream) {
@@ -110,6 +91,7 @@ export const RoomActions = () => {
                 {isMicOn ? <Mic /> : <MicOff />}
               </RoomActionButton>
               <RoomActionButton
+                disabled
                 tooltip={isScreenShareOn ? "Paylaşımı Durdur" : "Ekranı Paylaş"}
                 onClick={toggleScreenShare}
               >
@@ -119,7 +101,12 @@ export const RoomActions = () => {
                 <RoomActionButton
                   tooltip="Sohbetten Ayrıl"
                   variant="destructive"
-                  onClick={handleLeaveVoiceChannel}
+                  onClick={() =>
+                    leaveVoiceChannel({
+                      username,
+                      socketId: socket?.id as string,
+                    })
+                  }
                 >
                   <PhoneOff />
                 </RoomActionButton>
@@ -141,14 +128,18 @@ export const RoomActions = () => {
             </div>
           </div>
 
-          {!isOnVoiceChannel && (
+          {!isOnVoiceChannel ? (
             <RoomActionButton
               tooltip="Sohbete Katıl"
               variant="success"
-              onClick={handleJoinVoiceChannel}
+              onClick={() =>
+                joinVoiceChannel({ username, socketId: socket?.id as string })
+              }
             >
               <Phone />
             </RoomActionButton>
+          ) : (
+            <ShowPing ping={100} />
           )}
         </div>
       </TooltipProvider>

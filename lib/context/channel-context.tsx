@@ -1,11 +1,17 @@
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { useSocket } from "./socket-context";
-import { SocketUser } from "../types";
+import { Channel, Subscriber } from "../types";
 
 interface IChannelContext {
   channelId: string;
-  subscribers: SocketUser[];
+  subscribers: Subscriber[];
 }
 
 const ChannelContext = createContext<IChannelContext>({
@@ -21,23 +27,36 @@ export const ChannelContextProvider = ({
   channelId: string;
 }) => {
   const { socket, isSocketConnected } = useSocket();
-  const [subscribers, setSubscribers] = useState<SocketUser[]>([]);
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
 
   if (!channelId) throw new Error("Channel ID is required");
+
+  const handleGetChannelSubscribers = useCallback((channel: Channel) => {
+    setSubscribers(channel.subscribers);
+  }, []);
 
   // Set online users
   useEffect(() => {
     if (!isSocketConnected || !socket) return;
-    socket.emit("subscribe-channel", { channelId, socketId: socket.id });
 
-    socket.on("get-channel-subscribers", (users) => {
-      setSubscribers(users);
-    });
+    const isSubscribed = subscribers?.find((sub) => sub.socketId === socket.id);
+
+    socket.on("get-channel-subscribers", handleGetChannelSubscribers);
+
+    if (!isSubscribed) {
+      socket.emit("subscribe-channel", { channelId, socketId: socket.id });
+    }
 
     return () => {
-      socket.off("get-channel-subscribers");
+      socket.off("get-channel-subscribers", handleGetChannelSubscribers);
     };
-  }, [socket, isSocketConnected, channelId]);
+  }, [
+    socket,
+    isSocketConnected,
+    channelId,
+    handleGetChannelSubscribers,
+    subscribers,
+  ]);
 
   return (
     <ChannelContext.Provider value={{ channelId, subscribers }}>

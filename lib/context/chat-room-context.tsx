@@ -8,18 +8,20 @@ import {
   useRef,
 } from "react";
 import { useSocket } from "./socket-context";
-import { Participant, VoiceChannel } from "../types";
+import { Participant, PeerData, VoiceChannel, WebRTCSignal } from "../types";
 import useSound from "use-sound";
 import { useChannel } from "./channel-context";
+
+import Peer, { SignalData } from "simple-peer";
 
 interface IChatRoomContext {
   joinVoiceChannel: (participant: Participant) => void;
   leaveVoiceChannel: (participant: Participant) => void;
-  getVoiceChannel: () => void;
   getMediaStream: (faceMode?: string) => Promise<MediaStream | null>;
   localStream: MediaStream | null;
   isOnVoiceChannel: boolean;
   voiceChannel: VoiceChannel | null;
+  peers: PeerData[];
 }
 
 const ChatRoomContext = createContext<IChatRoomContext | null>(null);
@@ -41,15 +43,114 @@ export const ChatRoomContextProvider = ({
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [voiceChannel, setVoiceChannel] = useState<VoiceChannel | null>(null);
   const [isOnVoiceChannel, setIsOnVoiceChannel] = useState(false);
+  const [peers, setPeers] = useState<PeerData[]>([]);
 
   const previousVoiceChannelRef = useRef<VoiceChannel | null>(null);
 
+  const handleHangUp = useCallback(({}) => {}, []);
+
+  const createPeer = useCallback(
+    (stream: MediaStream, initiator: boolean, participant: Participant) => {
+      const iceServers: RTCIceServer[] = [
+        {
+          urls: [
+            "stun:stun.l.google.com:19302",
+            "stun:stun1.l.google.com:19302",
+            "stun:stun2.l.google.com:19302",
+            "stun:stun3.l.google.com:19302",
+          ],
+        },
+        /* {
+        urls: "stun:stun.relay.metered.ca:80",
+      },
+      {
+        urls: "turn:a.relay.metered.ca:80",
+        username: "3d33a57ef155efb838d32b7f",
+        credential: "aZTrXGsg50igmOfN",
+      },
+      {
+        urls: "turn:a.relay.metered.ca:443",
+        username: "3d33a57ef155efb838d32b7f",
+        credential: "aZTrXGsg50igmOfN",
+      },
+      {
+        urls: "turn:a.relay.metered.ca:443?transport=tcp",
+        username: "3d33a57ef155efb838d32b7f",
+        credential: "aZTrXGsg50igmOfN",
+      },
+      {
+        urls: "turn:a.relay.metered.ca:80?transport=tcp",
+        username: "3d33a57ef155efb838d32b7f",
+        credential: "aZTrXGsg50igmOfN",
+      }, */
+      ];
+
+      const peer = new Peer({
+        stream,
+        initiator,
+        trickle: true,
+        config: {
+          iceServers,
+        },
+      });
+
+      peer.on("stream", (stream) => {
+        setPeers((prev) => [
+          ...prev,
+          { peerConnection: peer, stream, participant },
+        ]);
+      });
+
+      peer.on("error", (error) => {
+        console.error("Peer error", error);
+      });
+
+      peer.on("close", handleHangUp);
+
+      const rtcPeerConnection: RTCPeerConnection = (peer as any)._pc;
+
+      rtcPeerConnection.oniceconnectionstatechange = async () => {
+        if (
+          rtcPeerConnection.iceConnectionState === "disconnected" ||
+          rtcPeerConnection.iceConnectionState === "failed"
+        ) {
+          handleHangUp({});
+        }
+      };
+
+      return peer;
+    },
+    [setPeers, handleHangUp]
+  );
+
   const joinVoiceChannel = useCallback(
-    (participant: Participant) => {
+    async (participant: Participant) => {
+      if (!socket || !isSocketConnected) return;
+      const stream = await getMediaStream();
+      if (!stream) {
+        console.log("No stream in joinVoiceChannel");
+        return;
+      }
+
+      const newPeer = createPeer(stream, true, participant);
+
+      setPeers((prev) => [
+        ...prev,
+        { peerConnection: newPeer, stream, participant },
+      ]);
+
+      newPeer.on("signal", async (data: SignalData) => {
+        // emit signal to other peers
+        socket?.emit("webrtc-signal", {
+          sdp: data,
+          participant,
+        } as WebRTCSignal);
+      });
+
       socket?.emit("join-voice-channel", { channelId, participant });
       setIsOnVoiceChannel(true);
     },
-    [socket, channelId]
+    [socket, channelId, isSocketConnected]
   );
 
   const leaveVoiceChannel = useCallback(
@@ -60,9 +161,37 @@ export const ChatRoomContextProvider = ({
     [socket, channelId]
   );
 
-  const getVoiceChannel = useCallback(() => {
-    socket?.emit("get-voice-channel", channelId);
-  }, [socket, channelId]);
+  const completePeerConnection = useCallback(
+    async ({ sdp, participant }: WebRTCSignal) => {
+      if (!localStream) {
+        console.log("No local stream in completePeerConnection");
+        return;
+      }
+
+      const peer = peers.find(
+        (p) => p.participant.socketId === participant.socketId
+      );
+      if (peer) {
+        peer.peerConnection.signal(sdp);
+      } else {
+        const newPeer = createPeer(localStream, true, participant);
+
+        setPeers((prev) => [
+          ...prev,
+          { peerConnection: newPeer, stream: null, participant },
+        ]);
+
+        newPeer.on("signal", async (data: SignalData) => {
+          // emit signal to other peers
+          socket?.emit("webrtc-signal", {
+            sdp: data,
+            participant,
+          } as WebRTCSignal);
+        });
+      }
+    },
+    [localStream, createPeer, peers, voiceChannel]
+  );
 
   const getMediaStream = useCallback(
     async (faceMode?: string) => {
@@ -97,39 +226,42 @@ export const ChatRoomContextProvider = ({
     [localStream]
   );
 
+  const getVoiceChannel = useCallback((updatedVoiceChannel: VoiceChannel) => {
+    const previousVoiceChannel = previousVoiceChannelRef.current;
+
+    if (previousVoiceChannel) {
+      // VoiceChannel subscribers azalırsa
+      if (
+        previousVoiceChannel.subscribers.length >
+        updatedVoiceChannel.subscribers.length
+      ) {
+        playLeaveSound();
+      }
+
+      // VoiceChannel subscribers artırırsa
+      else {
+        playJoinSound();
+      }
+    }
+
+    setVoiceChannel(updatedVoiceChannel);
+    previousVoiceChannelRef.current = updatedVoiceChannel;
+  }, []);
+
   // Set online users
   useEffect(() => {
     if (!isSocketConnected || !socket) return;
 
     // İlk başta voiceChannel'ı almak için
-    getVoiceChannel();
+    socket.emit("get-voice-channel");
 
-    socket.on("get-voice-channel", (updatedVoiceChannel) => {
-      const previousVoiceChannel = previousVoiceChannelRef.current;
-
-      if (previousVoiceChannel) {
-        // VoiceChannel subscribers azalırsa
-        if (
-          previousVoiceChannel.subscribers.length >
-          updatedVoiceChannel.subscribers.length
-        ) {
-          playLeaveSound();
-        }
-
-        // VoiceChannel subscribers artırırsa
-        else {
-          playJoinSound();
-        }
-      }
-
-      setVoiceChannel(updatedVoiceChannel);
-      previousVoiceChannelRef.current = updatedVoiceChannel;
-    });
-
+    socket.on("get-voice-channel", getVoiceChannel);
+    socket.on("webrtc-signal", completePeerConnection);
     return () => {
-      socket.off("get-voice-channel");
+      socket.off("get-voice-channel", getVoiceChannel);
+      socket.off("webrtc-signal", completePeerConnection);
     };
-  }, [socket, isSocketConnected, getVoiceChannel]);
+  }, [socket, isSocketConnected, getVoiceChannel, completePeerConnection]);
 
   return (
     <ChatRoomContext.Provider
@@ -138,9 +270,9 @@ export const ChatRoomContextProvider = ({
         joinVoiceChannel,
         leaveVoiceChannel,
         isOnVoiceChannel,
-        getVoiceChannel,
         getMediaStream,
         localStream,
+        peers,
       }}
     >
       {children}
