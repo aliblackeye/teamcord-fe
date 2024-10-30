@@ -1,10 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+
 import { Participant as ParticipantType } from "@/lib/types";
 import { cn } from "@/lib/utils/cn";
 import { useSearchParams } from "next/navigation";

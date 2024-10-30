@@ -36,7 +36,7 @@ export const ParticipantVideo = ({
         ref={videoRef}
         className="w-full max-w-[100%] min-w-[350px] min-h-[225px] h-auto object-cover rounded-lg border"
         autoPlay
-        muted={isLocalStream}
+        muted={false}
         playsInline
       />
     </div>

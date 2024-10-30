@@ -60,29 +60,29 @@ export const ChatRoomContextProvider = ({
             "stun:stun3.l.google.com:19302",
           ],
         },
-        /* {
-        urls: "stun:stun.relay.metered.ca:80",
-      },
-      {
-        urls: "turn:a.relay.metered.ca:80",
-        username: "3d33a57ef155efb838d32b7f",
-        credential: "aZTrXGsg50igmOfN",
-      },
-      {
-        urls: "turn:a.relay.metered.ca:443",
-        username: "3d33a57ef155efb838d32b7f",
-        credential: "aZTrXGsg50igmOfN",
-      },
-      {
-        urls: "turn:a.relay.metered.ca:443?transport=tcp",
-        username: "3d33a57ef155efb838d32b7f",
-        credential: "aZTrXGsg50igmOfN",
-      },
-      {
-        urls: "turn:a.relay.metered.ca:80?transport=tcp",
-        username: "3d33a57ef155efb838d32b7f",
-        credential: "aZTrXGsg50igmOfN",
-      }, */
+        {
+          urls: "stun:stun.relay.metered.ca:80",
+        },
+        {
+          urls: "turn:a.relay.metered.ca:80",
+          username: "3d33a57ef155efb838d32b7f",
+          credential: "aZTrXGsg50igmOfN",
+        },
+        {
+          urls: "turn:a.relay.metered.ca:443",
+          username: "3d33a57ef155efb838d32b7f",
+          credential: "aZTrXGsg50igmOfN",
+        },
+        {
+          urls: "turn:a.relay.metered.ca:443?transport=tcp",
+          username: "3d33a57ef155efb838d32b7f",
+          credential: "aZTrXGsg50igmOfN",
+        },
+        {
+          urls: "turn:a.relay.metered.ca:80?transport=tcp",
+          username: "3d33a57ef155efb838d32b7f",
+          credential: "aZTrXGsg50igmOfN",
+        },
       ];
 
       const peer = new Peer({
@@ -206,7 +206,13 @@ export const ChatRoomContextProvider = ({
         );
 
         const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
+          // ses kalitesini maksimize et
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: true,
+            sampleRate: 48000,
+            sampleSize: 16,
+          },
           video: {
             width: { min: 640, ideal: 1280, max: 1920 },
             height: { min: 360, ideal: 720, max: 1080 },
