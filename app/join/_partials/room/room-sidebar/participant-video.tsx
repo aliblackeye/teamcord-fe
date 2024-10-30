@@ -1,16 +1,22 @@
 import { useChatRoom } from "@/lib/context/chat-room-context";
+import { useSocket } from "@/lib/context/socket-context";
+import { Participant } from "@/lib/types";
 import { useEffect, useRef } from "react";
 
-interface ParticipantVideoProps {
-  stream: MediaStream | null;
-  isLocalStream: boolean;
-}
 export const ParticipantVideo = ({
-  stream,
-  isLocalStream,
-}: ParticipantVideoProps) => {
+  participant,
+}: {
+  participant: Participant;
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { localStream } = useChatRoom();
+  const { localStream, peers } = useChatRoom();
+  const { socket } = useSocket();
+
+  console.log(participant);
+  const isLocalStream = participant?.socketId === socket?.id;
+  const stream = peers?.find(
+    (p) => p.participant.socketId === participant.socketId
+  )?.stream;
 
   useEffect(() => {
     if (videoRef.current && stream) {

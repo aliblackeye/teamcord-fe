@@ -19,11 +19,7 @@ export const RoomContentPanel = () => {
     <ResizablePanel defaultSize={100} minSize={0}>
       <div className="p-4 h-full flex gap-4 flex-wrap justify-center items-center ">
         {voiceChannel?.subscribers?.map((p, index) => (
-          <ParticipantVideo
-            key={index}
-            stream={p.stream}
-            isLocalStream={p.socketId === socket?.id}
-          />
+          <ParticipantVideo key={index} participant={p} />
         ))}
       </div>
     </ResizablePanel>
