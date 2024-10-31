@@ -99,7 +99,7 @@ export const RoomActions = () => {
               </RoomActionButton>
               {isOnVoiceChannel && (
                 <RoomActionButton
-                  tooltip="Sohbetten Ayrıl"
+                  tooltip="Bağlantıyı Kes"
                   variant="destructive"
                   onClick={() =>
                     leaveVoiceChannel({
@@ -130,7 +130,7 @@ export const RoomActions = () => {
 
           {!isOnVoiceChannel ? (
             <RoomActionButton
-              tooltip="Sohbete Katıl"
+              tooltip="Sohbete Bağlan"
               variant="success"
               onClick={() =>
                 joinVoiceChannel({ username, socketId: socket?.id as string })

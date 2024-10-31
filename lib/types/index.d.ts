@@ -9,17 +9,23 @@ export type Participant = {
   socketId: string;
 };
 
+export type VoiceChannel = {
+  channelId: string;
+  subscribers: Participant[];
+};
 export type Message = {
   id: string;
   content: string;
   createdAt: Date;
-  sender: string;
+  username: string;
   avatar: string;
+  systemMessage?: boolean;
 };
 
-export type VoiceChannel = {
-  channelId: string;
-  subscribers: Participant[];
+export type NewMessage = {
+  content: string;
+  username: string;
+  avatar: string;
 };
 
 export type Subscriber = {
