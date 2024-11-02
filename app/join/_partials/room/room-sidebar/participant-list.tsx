@@ -7,13 +7,13 @@ import { RoomActions } from "./room-actions";
 import { Participant } from "./participant";
 
 export const ParticipantList = () => {
-  const { voiceChannel } = useChatRoom();
+  const { room } = useChatRoom();
 
   return (
     <div className="flex flex-col w-[220px] justify-between dark:border-neutral-800 border-neutral-200 dark:bg-neutral-900 bg-neutral-100 h-[calc(100%-60px)]">
       <ScrollArea className="h-full">
         <div className="p-1">
-          {voiceChannel?.subscribers?.map((user, index) => {
+          {room?.usersInCall?.map((user, index) => {
             return <Participant key={index} user={user} />;
           })}
         </div>

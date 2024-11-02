@@ -6,7 +6,7 @@ import { ParticipantVideo } from "./room-sidebar/participant-video";
 
 export const RoomContentPanel = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { voiceChannel, localStream } = useChatRoom();
+  const { room, localStream } = useChatRoom();
   const { socket } = useSocket();
 
   useEffect(() => {
@@ -18,7 +18,7 @@ export const RoomContentPanel = () => {
   return (
     <ResizablePanel defaultSize={100} minSize={0}>
       <div className="p-4 h-full flex gap-4 flex-wrap justify-center items-center ">
-        {voiceChannel?.subscribers?.map((p, index) => (
+        {room?.usersInCall?.map((p, index) => (
           <ParticipantVideo key={index} participant={p} />
         ))}
       </div>

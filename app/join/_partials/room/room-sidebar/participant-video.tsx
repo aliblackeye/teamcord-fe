@@ -12,7 +12,6 @@ export const ParticipantVideo = ({
   const { localStream, peers } = useChatRoom();
   const { socket } = useSocket();
 
-  console.log(participant);
   const isLocalStream = participant?.socketId === socket?.id;
   const stream = peers?.find(
     (p) => p.participant.socketId === participant.socketId
@@ -20,7 +19,6 @@ export const ParticipantVideo = ({
 
   useEffect(() => {
     if (videoRef.current && stream) {
-      console.log("girdi");
       if (isLocalStream) {
         videoRef.current.srcObject = localStream;
       } else {

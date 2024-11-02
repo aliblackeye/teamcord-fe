@@ -44,7 +44,10 @@ export const ChannelContextProvider = ({
     socket.on("get-channel-subscribers", handleGetChannelSubscribers);
 
     if (!isSubscribed) {
-      socket.emit("subscribe-channel", { channelId, socketId: socket.id });
+      socket.emit("subscribe-channel", {
+        channelId,
+        socketId: socket.id,
+      });
     }
 
     return () => {

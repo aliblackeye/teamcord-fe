@@ -23,13 +23,13 @@ export const RoomActions = () => {
   const searchParams = useSearchParams();
   const username = searchParams.get("username") || "Anonim";
   const {
-    joinVoiceChannel,
-    leaveVoiceChannel,
-    isOnVoiceChannel,
+    joinRoom,
+    leaveRoom,
+    isOnCall,
 
     localStream,
   } = useChatRoom();
-  const { socket } = useSocket();
+  const { socket, isSocketConnected } = useSocket();
 
   const [isMicOn, setIsMicOn] = useState(false);
   const [isScreenShareOn, setIsScreenShareOn] = useState(false);
@@ -38,7 +38,6 @@ export const RoomActions = () => {
   const toggleCamera = () => {
     if (localStream) {
       const videoTrack = localStream.getVideoTracks()[0];
-      console.log("videoTrack.enabled", videoTrack.enabled);
       videoTrack.enabled = !videoTrack.enabled;
       setIsCameraOn(videoTrack.enabled);
     }
@@ -61,8 +60,10 @@ export const RoomActions = () => {
     if (localStream) {
       const audioTrack = localStream.getAudioTracks()[0];
       const videoTrack = localStream.getVideoTracks()[0];
-      setIsMicOn(audioTrack.enabled);
-      setIsCameraOn(videoTrack.enabled);
+      audioTrack.enabled = false;
+      videoTrack.enabled = false;
+      setIsMicOn(false);
+      setIsCameraOn(false);
     }
   }, [localStream]);
 
@@ -70,11 +71,11 @@ export const RoomActions = () => {
     <div
       className={cn(
         "min-h-[108px] h-[108px] border-t dark:border-neutral-800",
-        !isOnVoiceChannel && "min-h-[60px] h-[60px]"
+        !isOnCall && "min-h-[60px] h-[60px]"
       )}
     >
       <TooltipProvider delayDuration={delayDuration}>
-        {isOnVoiceChannel && (
+        {isOnCall && (
           <div className="px-4 py-2 h-12">
             <div className="flex gap-2 justify-between">
               <RoomActionButton
@@ -97,12 +98,12 @@ export const RoomActions = () => {
               >
                 {isScreenShareOn ? <MonitorX /> : <ScreenShare />}
               </RoomActionButton>
-              {isOnVoiceChannel && (
+              {isOnCall && (
                 <RoomActionButton
                   tooltip="Bağlantıyı Kes"
                   variant="destructive"
                   onClick={() =>
-                    leaveVoiceChannel({
+                    leaveRoom({
                       username,
                       socketId: socket?.id as string,
                     })
@@ -128,12 +129,13 @@ export const RoomActions = () => {
             </div>
           </div>
 
-          {!isOnVoiceChannel ? (
+          {!isOnCall ? (
             <RoomActionButton
               tooltip="Sohbete Bağlan"
               variant="success"
+              disabled={!socket || !isSocketConnected}
               onClick={() =>
-                joinVoiceChannel({ username, socketId: socket?.id as string })
+                joinRoom({ username, socketId: socket?.id as string })
               }
             >
               <Phone />

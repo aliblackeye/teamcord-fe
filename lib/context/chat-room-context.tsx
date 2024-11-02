@@ -8,24 +8,56 @@ import {
   useRef,
 } from "react";
 import { useSocket } from "./socket-context";
-import { Participant, PeerData, VoiceChannel, WebRTCSignal } from "../types";
+import { Participant, PeerData, Room, WebRTCSignal } from "../types";
 import useSound from "use-sound";
 import { useChannel } from "./channel-context";
 
 import Peer, { SignalData } from "simple-peer";
 
 interface IChatRoomContext {
-  joinVoiceChannel: (participant: Participant) => void;
-  leaveVoiceChannel: (participant: Participant) => void;
+  joinRoom: (participant: Participant) => void;
+  leaveRoom: (participant: Participant) => void;
   getMediaStream: (faceMode?: string) => Promise<MediaStream | null>;
   localStream: MediaStream | null;
-  isOnVoiceChannel: boolean;
-  voiceChannel: VoiceChannel | null;
+  isOnCall: boolean;
+  room: Room | null;
   peers: PeerData[];
 }
 
 const ChatRoomContext = createContext<IChatRoomContext | null>(null);
-
+const iceServers: RTCIceServer[] = [
+  {
+    urls: [
+      "stun:stun.l.google.com:19302",
+      "stun:stun1.l.google.com:19302",
+      "stun:stun2.l.google.com:19302",
+      "stun:stun3.l.google.com:19302",
+    ],
+  },
+  {
+    urls: "stun:stun.relay.metered.ca:80",
+  },
+  {
+    urls: "turn:a.relay.metered.ca:80",
+    username: "3d33a57ef155efb838d32b7f",
+    credential: "aZTrXGsg50igmOfN",
+  },
+  {
+    urls: "turn:a.relay.metered.ca:443",
+    username: "3d33a57ef155efb838d32b7f",
+    credential: "aZTrXGsg50igmOfN",
+  },
+  {
+    urls: "turn:a.relay.metered.ca:443?transport=tcp",
+    username: "3d33a57ef155efb838d32b7f",
+    credential: "aZTrXGsg50igmOfN",
+  },
+  {
+    urls: "turn:a.relay.metered.ca:80?transport=tcp",
+    username: "3d33a57ef155efb838d32b7f",
+    credential: "aZTrXGsg50igmOfN",
+  },
+];
 export const ChatRoomContextProvider = ({
   children,
 }: {
@@ -41,50 +73,16 @@ export const ChatRoomContextProvider = ({
 
   // States
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [voiceChannel, setVoiceChannel] = useState<VoiceChannel | null>(null);
-  const [isOnVoiceChannel, setIsOnVoiceChannel] = useState(false);
+  const [room, setRoom] = useState<Room | null>(null);
+  const [isOnCall, setIsOnCall] = useState(false);
   const [peers, setPeers] = useState<PeerData[]>([]);
 
-  const previousVoiceChannelRef = useRef<VoiceChannel | null>(null);
+  const previousVoiceChannelRef = useRef<Room | null>(null);
 
   const handleHangUp = useCallback(({}) => {}, []);
 
   const createPeer = useCallback(
     (stream: MediaStream, initiator: boolean, participant: Participant) => {
-      const iceServers: RTCIceServer[] = [
-        {
-          urls: [
-            "stun:stun.l.google.com:19302",
-            "stun:stun1.l.google.com:19302",
-            "stun:stun2.l.google.com:19302",
-            "stun:stun3.l.google.com:19302",
-          ],
-        },
-        {
-          urls: "stun:stun.relay.metered.ca:80",
-        },
-        {
-          urls: "turn:a.relay.metered.ca:80",
-          username: "3d33a57ef155efb838d32b7f",
-          credential: "aZTrXGsg50igmOfN",
-        },
-        {
-          urls: "turn:a.relay.metered.ca:443",
-          username: "3d33a57ef155efb838d32b7f",
-          credential: "aZTrXGsg50igmOfN",
-        },
-        {
-          urls: "turn:a.relay.metered.ca:443?transport=tcp",
-          username: "3d33a57ef155efb838d32b7f",
-          credential: "aZTrXGsg50igmOfN",
-        },
-        {
-          urls: "turn:a.relay.metered.ca:80?transport=tcp",
-          username: "3d33a57ef155efb838d32b7f",
-          credential: "aZTrXGsg50igmOfN",
-        },
-      ];
-
       const peer = new Peer({
         stream,
         initiator,
@@ -123,12 +121,12 @@ export const ChatRoomContextProvider = ({
     [setPeers, handleHangUp]
   );
 
-  const joinVoiceChannel = useCallback(
+  const joinRoom = useCallback(
     async (participant: Participant) => {
       if (!socket || !isSocketConnected) return;
       const stream = await getMediaStream();
       if (!stream) {
-        console.log("No stream in joinVoiceChannel");
+        console.log("No stream in joinRoom");
         return;
       }
 
@@ -147,16 +145,16 @@ export const ChatRoomContextProvider = ({
         } as WebRTCSignal);
       });
 
-      socket?.emit("join-voice-channel", { channelId, participant });
-      setIsOnVoiceChannel(true);
+      socket?.emit("join-room", { channelId, participant });
+      setIsOnCall(true);
     },
     [socket, channelId, isSocketConnected]
   );
 
-  const leaveVoiceChannel = useCallback(
+  const leaveRoom = useCallback(
     (participant: Participant) => {
-      socket?.emit("leave-voice-channel", { channelId, participant });
-      setIsOnVoiceChannel(false);
+      socket?.emit("leave-room", { channelId, participant });
+      setIsOnCall(false);
     },
     [socket, channelId]
   );
@@ -190,7 +188,7 @@ export const ChatRoomContextProvider = ({
         });
       }
     },
-    [localStream, createPeer, peers, voiceChannel]
+    [localStream, createPeer, peers, room]
   );
 
   const getMediaStream = useCallback(
@@ -232,14 +230,14 @@ export const ChatRoomContextProvider = ({
     [localStream]
   );
 
-  const getVoiceChannel = useCallback((updatedVoiceChannel: VoiceChannel) => {
+  const getRoom = useCallback((updatedVoiceChannel: Room) => {
     const previousVoiceChannel = previousVoiceChannelRef.current;
 
     if (previousVoiceChannel) {
       // VoiceChannel subscribers azalırsa
       if (
-        previousVoiceChannel.subscribers.length >
-        updatedVoiceChannel.subscribers.length
+        previousVoiceChannel?.usersInCall?.length >
+        updatedVoiceChannel?.usersInCall?.length
       ) {
         playLeaveSound();
       }
@@ -250,7 +248,7 @@ export const ChatRoomContextProvider = ({
       }
     }
 
-    setVoiceChannel(updatedVoiceChannel);
+    setRoom(updatedVoiceChannel);
     previousVoiceChannelRef.current = updatedVoiceChannel;
   }, []);
 
@@ -259,23 +257,23 @@ export const ChatRoomContextProvider = ({
     if (!isSocketConnected || !socket) return;
 
     // İlk başta voiceChannel'ı almak için
-    socket.emit("get-voice-channel");
+    socket.emit("get-room");
 
-    socket.on("get-voice-channel", getVoiceChannel);
+    socket.on("get-room", getRoom);
     socket.on("webrtc-signal", completePeerConnection);
     return () => {
-      socket.off("get-voice-channel", getVoiceChannel);
+      socket.off("get-room", getRoom);
       socket.off("webrtc-signal", completePeerConnection);
     };
-  }, [socket, isSocketConnected, getVoiceChannel, completePeerConnection]);
+  }, [socket, isSocketConnected, getRoom, completePeerConnection]);
 
   return (
     <ChatRoomContext.Provider
       value={{
-        voiceChannel,
-        joinVoiceChannel,
-        leaveVoiceChannel,
-        isOnVoiceChannel,
+        room,
+        joinRoom,
+        leaveRoom,
+        isOnCall,
         getMediaStream,
         localStream,
         peers,

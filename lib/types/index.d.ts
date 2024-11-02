@@ -8,11 +8,6 @@ export type Participant = {
   username: string;
   socketId: string;
 };
-
-export type VoiceChannel = {
-  channelId: string;
-  subscribers: Participant[];
-};
 export type Message = {
   id: string;
   content: string;
@@ -26,6 +21,13 @@ export type NewMessage = {
   content: string;
   username: string;
   avatar: string;
+};
+
+export type Room = {
+  channelId: string;
+  users: Participant[];
+  usersInCall: Participant[];
+  messages: Message[];
 };
 
 export type Subscriber = {
