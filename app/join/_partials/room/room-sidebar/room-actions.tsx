@@ -141,7 +141,7 @@ export const RoomActions = () => {
               <Phone />
             </RoomActionButton>
           ) : (
-            <ShowPing ping={100} />
+            <ShowPing />
           )}
         </div>
       </TooltipProvider>

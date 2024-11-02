@@ -5,6 +5,7 @@ import { io, Socket } from "socket.io-client";
 interface ISocketContext {
   socket: Socket | null;
   isSocketConnected: boolean;
+  ping: number;
 }
 
 export const SocketContext = createContext<ISocketContext | null>(null);
@@ -15,7 +16,19 @@ export const SocketContextProvider = ({
   children: React.ReactNode;
 }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [ping, setPing] = useState(0);
   const [isSocketConnected, setIsSocketConnected] = useState(false);
+
+  useEffect(() => {
+    setInterval(() => {
+      const start = Date.now();
+
+      socket?.emit("ping", () => {
+        const duration = Date.now() - start;
+        setPing(duration);
+      });
+    }, 1000);
+  }, [socket]);
 
   useEffect(() => {
     const newSocket = io(
@@ -58,6 +71,7 @@ export const SocketContextProvider = ({
       value={{
         socket,
         isSocketConnected,
+        ping,
       }}
     >
       {children}
