@@ -20,7 +20,7 @@ export const SocketContextProvider = ({
   const [isSocketConnected, setIsSocketConnected] = useState(false);
 
   useEffect(() => {
-    setInterval(() => {
+    const interval = setInterval(() => {
       const start = Date.now();
 
       socket?.emit("ping", () => {
@@ -28,6 +28,10 @@ export const SocketContextProvider = ({
         setPing(duration);
       });
     }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, [socket]);
 
   useEffect(() => {

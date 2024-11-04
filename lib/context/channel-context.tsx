@@ -37,6 +37,7 @@ export const ChannelContextProvider = ({
 
   // Set online users
   useEffect(() => {
+    console.log("ChannelContextProvider useEffect çalıştı");
     if (!isSocketConnected || !socket) return;
 
     const isSubscribed = subscribers?.find((sub) => sub.socketId === socket.id);
@@ -48,6 +49,7 @@ export const ChannelContextProvider = ({
         channelId,
         socketId: socket.id,
       });
+      console.log("abone olunuyor");
     }
 
     return () => {

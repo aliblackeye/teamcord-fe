@@ -23,7 +23,7 @@ export const RoomActions = () => {
   const searchParams = useSearchParams();
   const username = searchParams.get("username") || "Anonim";
   const {
-    joinRoom,
+    joinCall,
     leaveRoom,
     isOnCall,
 
@@ -135,7 +135,7 @@ export const RoomActions = () => {
               variant="success"
               disabled={!socket || !isSocketConnected}
               onClick={() =>
-                joinRoom({ username, socketId: socket?.id as string })
+                joinCall({ username, socketId: socket?.id as string })
               }
             >
               <Phone />

@@ -8,15 +8,16 @@ import {
   useRef,
 } from "react";
 import { useSocket } from "./socket-context";
-import { Participant, PeerData, Room, WebRTCSignal } from "../types";
+import { User, PeerData, Room, WebRTCSignal } from "../types";
 import useSound from "use-sound";
 import { useChannel } from "./channel-context";
 
 import Peer, { SignalData } from "simple-peer";
 
 interface IChatRoomContext {
-  joinRoom: (participant: Participant) => void;
-  leaveRoom: (participant: Participant) => void;
+  joinCall: (user: User) => void;
+  joinRoom: (username: string) => void;
+  leaveRoom: (user: User) => void;
   getMediaStream: (faceMode?: string) => Promise<MediaStream | null>;
   localStream: MediaStream | null;
   isOnCall: boolean;
@@ -69,7 +70,7 @@ export const ChatRoomContextProvider = ({
 
   // Socket
   const { socket, isSocketConnected } = useSocket();
-  const { subscribers, channelId } = useChannel();
+  const { channelId } = useChannel();
 
   // States
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -77,12 +78,12 @@ export const ChatRoomContextProvider = ({
   const [isOnCall, setIsOnCall] = useState(false);
   const [peers, setPeers] = useState<PeerData[]>([]);
 
-  const previousVoiceChannelRef = useRef<Room | null>(null);
+  const previousRoomRef = useRef<Room | null>(null);
 
   const handleHangUp = useCallback(({}) => {}, []);
 
   const createPeer = useCallback(
-    (stream: MediaStream, initiator: boolean, participant: Participant) => {
+    (stream: MediaStream, initiator: boolean, user: User) => {
       const peer = new Peer({
         stream,
         initiator,
@@ -93,10 +94,7 @@ export const ChatRoomContextProvider = ({
       });
 
       peer.on("stream", (stream) => {
-        setPeers((prev) => [
-          ...prev,
-          { peerConnection: peer, stream, participant },
-        ]);
+        setPeers((prev) => [...prev, { peerConnection: peer, stream, user }]);
       });
 
       peer.on("error", (error) => {
@@ -121,74 +119,81 @@ export const ChatRoomContextProvider = ({
     [setPeers, handleHangUp]
   );
 
-  const joinRoom = useCallback(
-    async (participant: Participant) => {
+  const joinCall = useCallback(
+    async (user: User) => {
       if (!socket || !isSocketConnected) return;
       const stream = await getMediaStream();
       if (!stream) {
-        console.log("No stream in joinRoom");
+        console.log("No stream in joinCall");
         return;
       }
 
-      const newPeer = createPeer(stream, true, participant);
+      const newPeer = createPeer(stream, true, user);
 
-      setPeers((prev) => [
-        ...prev,
-        { peerConnection: newPeer, stream, participant },
-      ]);
+      setPeers((prev) => [...prev, { peerConnection: newPeer, stream, user }]);
 
       newPeer.on("signal", async (data: SignalData) => {
         // emit signal to other peers
         socket?.emit("webrtc-signal", {
           sdp: data,
-          participant,
+          user,
         } as WebRTCSignal);
       });
 
-      socket?.emit("join-room", { channelId, participant });
+      socket?.emit("join-call", { channelId, user });
       setIsOnCall(true);
     },
     [socket, channelId, isSocketConnected]
   );
 
+  const joinRoom = useCallback(
+    (username: string) => {
+      if (!socket || !isSocketConnected) return;
+      socket.emit("join-room", {
+        channelId,
+        user: { socketId: socket.id, username },
+      });
+      console.log("odaya giriş yapılıyor");
+    },
+    [socket, channelId, isSocketConnected]
+  );
+
   const leaveRoom = useCallback(
-    (participant: Participant) => {
-      socket?.emit("leave-room", { channelId, participant });
+    (user: User) => {
+      socket?.emit("leave-room", { channelId, user });
       setIsOnCall(false);
     },
     [socket, channelId]
   );
 
   const completePeerConnection = useCallback(
-    async ({ sdp, participant }: WebRTCSignal) => {
+    async ({ sdp, user }: WebRTCSignal) => {
       if (!localStream) {
         console.log("No local stream in completePeerConnection");
         return;
       }
 
-      const peer = peers.find(
-        (p) => p.participant.socketId === participant.socketId
-      );
+      const peer = peers.find((p) => p.user.socketId === user.socketId);
       if (peer) {
         peer.peerConnection.signal(sdp);
       } else {
-        const newPeer = createPeer(localStream, true, participant);
+        const newPeer = createPeer(localStream, true, user);
 
         setPeers((prev) => [
           ...prev,
-          { peerConnection: newPeer, stream: null, participant },
+          { peerConnection: newPeer, stream: null, user },
         ]);
 
         newPeer.on("signal", async (data: SignalData) => {
           // emit signal to other peers
           socket?.emit("webrtc-signal", {
             sdp: data,
-            participant,
+            user,
           } as WebRTCSignal);
         });
       }
     },
-    [localStream, createPeer, peers, room]
+    [localStream, peers]
   );
 
   const getMediaStream = useCallback(
@@ -230,14 +235,13 @@ export const ChatRoomContextProvider = ({
     [localStream]
   );
 
-  const getRoom = useCallback((updatedVoiceChannel: Room) => {
-    const previousVoiceChannel = previousVoiceChannelRef.current;
+  const getRoom = useCallback((updatedRoom: Room) => {
+    const previousRoom = previousRoomRef.current;
 
-    if (previousVoiceChannel) {
-      // VoiceChannel subscribers azalırsa
+    if (previousRoom) {
+      // Room subscribers azalırsa
       if (
-        previousVoiceChannel?.usersInCall?.length >
-        updatedVoiceChannel?.usersInCall?.length
+        previousRoom?.usersInCall?.length > updatedRoom?.usersInCall?.length
       ) {
         playLeaveSound();
       }
@@ -248,29 +252,29 @@ export const ChatRoomContextProvider = ({
       }
     }
 
-    setRoom(updatedVoiceChannel);
-    previousVoiceChannelRef.current = updatedVoiceChannel;
+    setRoom(updatedRoom);
+    previousRoomRef.current = updatedRoom;
   }, []);
 
   // Set online users
   useEffect(() => {
+    console.log("ChatRoomContextProvider useEffect çalıştı");
     if (!isSocketConnected || !socket) return;
-
-    // İlk başta voiceChannel'ı almak için
-    socket.emit("get-room");
 
     socket.on("get-room", getRoom);
     socket.on("webrtc-signal", completePeerConnection);
+
     return () => {
       socket.off("get-room", getRoom);
       socket.off("webrtc-signal", completePeerConnection);
     };
-  }, [socket, isSocketConnected, getRoom, completePeerConnection]);
+  }, [socket, isSocketConnected, getRoom, completePeerConnection, channelId]);
 
   return (
     <ChatRoomContext.Provider
       value={{
         room,
+        joinCall,
         joinRoom,
         leaveRoom,
         isOnCall,

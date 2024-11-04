@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ResizablePanel } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useChatRoom } from "@/lib/context/chat-room-context";
 import { useSocket } from "@/lib/context/socket-context";
 import { Message, NewMessage } from "@/lib/types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,6 +34,7 @@ const formSchema = z.object({
 export const RoomChatPanel = () => {
   const username = useSearchParams().get("username");
   const roomId = useSearchParams().get("roomId");
+  const { room } = useChatRoom();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,7 +44,7 @@ export const RoomChatPanel = () => {
   });
 
   const { socket, isSocketConnected } = useSocket();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(room?.messages || []);
 
   const onNewRoomMessage = useCallback((message: Message) => {
     console.log("new room message", message);

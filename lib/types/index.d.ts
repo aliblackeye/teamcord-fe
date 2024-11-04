@@ -1,13 +1,14 @@
 import Peer from "simple-peer";
 
 export type OngoingCall = {
-  participants: Participant[];
+  users: User[];
 };
 
-export type Participant = {
-  username: string;
+export type User = {
   socketId: string;
+  username: string;
 };
+
 export type Message = {
   id: string;
   content: string;
@@ -25,8 +26,8 @@ export type NewMessage = {
 
 export type Room = {
   channelId: string;
-  users: Participant[];
-  usersInCall: Participant[];
+  users: User[];
+  usersInCall: User[];
   messages: Message[];
 };
 
@@ -37,12 +38,12 @@ export type Subscriber = {
 export type PeerData = {
   peerConnection: Peer.Instance;
   stream: MediaStream | null;
-  participant: Participant;
+  user: User;
 };
 
 export type WebRTCSignal = {
   sdp: SignalData;
-  participant: Participant;
+  user: User;
 };
 
 export type Channel = { channelId: string; subscribers: Subscriber[] };
